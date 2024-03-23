@@ -1,9 +1,13 @@
 spring:
   datasource:
-    driverClassName: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/spring_batch
+    # driverClassName: com.mysql.cj.jdbc.Driver
+    # url: jdbc:mysql://localhost:3306/spring_batch
+    driverClassName: org.h2.Driver
+    url: 'jdbc:h2:file:~/spring_batch/h2'
     username: root
     password: p@ssw0rd
   batch:
-    initialize-schema: always
-spring.batch.job.names=conditionalStepLogicJob
+    jdbc:
+      initialize-schema: always
+    job:
+      name: conditionalStepLogicJob
