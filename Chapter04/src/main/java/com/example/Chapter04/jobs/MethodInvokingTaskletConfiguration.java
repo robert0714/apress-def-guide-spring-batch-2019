@@ -14,63 +14,14 @@
  * limitations under the License.
  */
 package com.example.Chapter04.jobs;
-
-import com.example.Chapter04.service.CustomService;
-
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
+ 
+import org.springframework.boot.autoconfigure.SpringBootApplication; 
 
 /**
  * @author Michael Minella
- */
-@EnableBatchProcessing
+ */ 
 @SpringBootApplication
-public class MethodInvokingTaskletConfiguration {
-
-	@Autowired
-	private JobBuilderFactory jobBuilderFactory;
-
-	@Autowired
-	private StepBuilderFactory stepBuilderFactory;
-
-//	@Bean
-//	public Job methodInvokingJob() {
-//		return this.jobBuilderFactory.get("methodInvokingJob")
-//				.start(methodInvokingStep())
-//				.build();
-//	}
-//
-//	@Bean
-//	public Step methodInvokingStep() {
-//		return this.stepBuilderFactory.get("methodInvokingStep")
-//				.tasklet(methodInvokingTasklet(null))
-//				.build();
-//	}
-//
-//	@StepScope
-//	@Bean
-//	public MethodInvokingTaskletAdapter methodInvokingTasklet(
-//			@Value("#{jobParameters['message']}") String message) {
-//
-//		MethodInvokingTaskletAdapter methodInvokingTaskletAdapter =
-//				new MethodInvokingTaskletAdapter();
-//
-//		methodInvokingTaskletAdapter.setTargetObject(service());
-//		methodInvokingTaskletAdapter.setTargetMethod("serviceMethod");
-//		methodInvokingTaskletAdapter.setArguments(
-//				new String[] {message});
-//
-//		return methodInvokingTaskletAdapter;
-//	}
-
-	@Bean
-	public CustomService service() {
-		return new CustomService();
-	}
+public class MethodInvokingTaskletConfiguration { 
 
 //	public static void main(String[] args) {
 //		SpringApplication.run(MethodInvokingTaskletConfiguration.class, args);
