@@ -15,6 +15,7 @@ import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -26,6 +27,7 @@ import com.example.Chapter04.jobs.config.JobJobConfig;
 @SpringJUnitConfig({JobJobConfig.class  }) 
 @EnableAutoConfiguration
 @TestPropertySource("classpath:application.properties")
+@SpringBootTest(properties = { "spring.batch.job.name=conditionalStepLogicJob" })
 class JobJobTest {
 
     @Autowired
