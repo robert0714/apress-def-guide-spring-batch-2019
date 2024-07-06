@@ -18,8 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBatchTest
-@SpringBootTest(properties = { "spring.batch.job.name=importEcoinventJob" })
-public class DemoApplicationTest implements MySqlTestContainer {
+@SpringBootTest(properties = { "spring.batch.job.name=explorerJob" })
+public class DemoApplicationTest 
+//implements MySqlTestContainer 
+{
 	@Autowired
 	private JobLauncherTestUtils jobLauncherTestUtils;
 
@@ -28,15 +30,20 @@ public class DemoApplicationTest implements MySqlTestContainer {
 
 	@BeforeEach
 	protected void setUp() throws Exception {
-		assertThat(MySqlTestContainer.container.isRunning()).isTrue();
+//		assertThat(MySqlTestContainer.container.isRunning()).isTrue();
 	}
 
 	@AfterEach
 	public void cleanUp() {
 		jobRepositoryTestUtils.removeJobExecutions();
+		MySqlTestContainer.container.close();
 	}
 
 	@Test
+//	@SqlGroup({
+//        @Sql(scripts = {"classpath:org/springframework/batch/core/schema-mysql.sql"},
+//                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD) 
+//    })
 	public void givenEcoinventJob_whenJobExecuted_thenSuccess(@Autowired @Qualifier("explorerJob") Job job) throws Exception {
 		jobLauncherTestUtils.setJob(job);
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();

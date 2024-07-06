@@ -1,0 +1,11 @@
+spring:
+  datasource: 
+    url: jdbc:tc:mysql:8.0.36:///spring_batch 
+  batch:
+    jdbc:
+     #schema: classpath:org/springframework/batch/core/schema-h2.sql
+     #schema: classpath:org/springframework/batch/core/schema-postgresql.sql
+      schema: classpath:org/springframework/batch/core/schema-mysql.sql
+      initialize-schema: always
+    job:
+      enabled: true
