@@ -28,13 +28,23 @@ public class SystemCommandTaskletConfig {
 	}
 
 	@Bean
-	public SystemCommandTasklet systemCommandTasklet() {
+	public SystemCommandTasklet systemCommandTasklet() { 
+		String tmpdir = System.getProperty("java.io.tmpdir");
 		SystemCommandTasklet systemCommandTasklet = new SystemCommandTasklet();
-
-		systemCommandTasklet.setCommand("rm -rf /tmp.txt");
+		String os = System.getProperty("os.name");
+		String[] cmd;
+		if(os.toLowerCase().contains("windows")) { 
+			cmd = new String[] { "C:\\Windows\\System32\\cmd.exe","/c" ,"del",  "tmp.txt"};
+		}else { 
+			cmd = new String[] { "rm","tmp.txt"};
+		}
+		systemCommandTasklet.setCommand(cmd);
+		
 		systemCommandTasklet.setTimeout(5000);
 		systemCommandTasklet.setInterruptOnCancel(true);
-
+		
+		// Change this directory to something appropriate for your environment
+		systemCommandTasklet.setWorkingDirectory(tmpdir);
 		return systemCommandTasklet;
 	}
 

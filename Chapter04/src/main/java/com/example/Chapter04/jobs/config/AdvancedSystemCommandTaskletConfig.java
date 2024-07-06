@@ -6,7 +6,7 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.SimpleSystemProcessExitCodeMapper;
-import org.springframework.batch.core.step.tasklet.SystemCommandTasklet;
+import org.springframework.batch.core.step.tasklet.SystemCommandTasklet; 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
@@ -32,21 +32,35 @@ public class AdvancedSystemCommandTaskletConfig {
 	@Bean
 	public SystemCommandTasklet systemCommandTasklet() {
 		SystemCommandTasklet tasklet = new SystemCommandTasklet();
-
-		tasklet.setCommand("touch tmp.txt");
+		String os = System.getProperty("os.name");
+		String tmpdir = System.getProperty("java.io.tmpdir");
+		String[] cmd;
+		if(os.toLowerCase().contains("windows")) { 
+			cmd = new String[] { "C:\\Windows\\System32\\cmd.exe","/c" ,"echo", ">", "tmp.txt"};
+		}else { 
+			cmd = new String[] { "touch","tmp.txt"};
+		}
+		tasklet.setCommand(cmd);
 		tasklet.setTimeout(5000);
 		tasklet.setInterruptOnCancel(true);
 
 		// Change this directory to something appropriate for your environment
-		tasklet.setWorkingDirectory("/Users/mminella/spring-batch");
+		tasklet.setWorkingDirectory(tmpdir);
+		
 
 		tasklet.setSystemProcessExitCodeMapper(touchCodeMapper());
 		tasklet.setTerminationCheckInterval(5000);
 		tasklet.setTaskExecutor(new SimpleAsyncTaskExecutor());
-		tasklet.setEnvironmentParams(new String[] {
-				"JAVA_HOME=/java",
-				"BATCH_HOME=/Users/batch"});
 
+
+		if(os.toLowerCase().contains("windows")) { 
+			String javaHome = System.getProperty("JAVA_HOME");
+			tasklet.setEnvironmentParams(new String[] {String.format("JAVA_HOME=%s", javaHome) });			
+		}else { 
+			tasklet.setEnvironmentParams(new String[] {
+			"JAVA_HOME=/java",
+			"BATCH_HOME=/Users/batch"});
+		}
 		return tasklet;
 	}
 

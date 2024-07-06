@@ -5,4 +5,10 @@ spring:
     username: 'root'
     password: 'p@ssw0rd'
   batch:
-    initialize-schema: always
+    jdbc:
+     #schema: classpath:org/springframework/batch/core/schema-h2.sql
+     #schema: classpath:org/springframework/batch/core/schema-postgresql.sql
+      schema: classpath:org/springframework/batch/core/schema-mysql.sql
+      initialize-schema: always
+    job:
+      enabled: true
