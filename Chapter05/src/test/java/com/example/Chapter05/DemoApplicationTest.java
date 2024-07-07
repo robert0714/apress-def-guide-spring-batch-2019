@@ -36,7 +36,7 @@ public class DemoApplicationTest
 	@AfterEach
 	public void cleanUp() {
 		jobRepositoryTestUtils.removeJobExecutions();
-		MySqlTestContainer.container.close();
+//		MySqlTestContainer.container.close();
 	}
 
 	@Test

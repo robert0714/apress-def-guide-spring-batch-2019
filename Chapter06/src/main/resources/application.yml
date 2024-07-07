@@ -2,12 +2,40 @@ spring:
   batch:
 #    job:
 #      enabled: false
-    initialize-schema: always
+    jdbc: 
+      initialize-schema: always
+      #initialize-schema: never
+      #schema: classpath:org/springframework/batch/core/schema-h2.sql
+      #schema: classpath:org/springframework/batch/core/schema-postgresql.sql
+      schema: classpath:org/springframework/batch/core/schema-mysql.sql
   datasource:
     driverClassName: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/spring_batch
     username: 'root'
     password: 'p@ssw0rd'
-    initialization-mode: always
-    continue-on-error: true
-    platform: mysql
+    #  docker exec -it  mysql  bash 
+    #  mysql -uroot -pp@ssw0rd
+    #  use spring_batch;  show tables ;select count(*) from ACCOUNT_SUMMARY ;
+    #  use spring_batch;  show tables ;select count(*) from TRANSACTION ;
+  sql:
+    init:
+      schema-locations:
+      - classpath:schema-mysql.sql
+      - classpath:org/springframework/batch/core/schema-mysql.sql       			
+      #data-locations:
+      #- classpath:data-mysql.sql
+      #  data-mysql.sql is too big file
+      #  docker cp ./src/main/resources/schema-mysql.sql  mysql:/tmp/			
+      #  docker cp ./src/main/resources/data-mysql.sql mysql:/tmp/
+      #  docker exec -it  mysql  bash
+      #  mysql -uroot -pp@ssw0rd  spring_batch < /tmp/schema-mysql.sql
+      #  mysql -uroot -pp@ssw0rd	spring_batch < /tmp/data-mysql.sql
+      #mode: always
+      mode: never
+      continue-on-error: false 
+  jpa:
+    database-platform: mysql
+    
+main:
+  scenario: restJob
+# scenario: transactionJob

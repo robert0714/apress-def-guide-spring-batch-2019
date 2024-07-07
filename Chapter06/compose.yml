@@ -1,0 +1,19 @@
+services:
+  mysql:
+    container_name: mysql
+    image: mysql:8.0.37
+    # privileged: true
+    volumes: 
+    - mysql-data-spring_batch:/var/lib/mysql    
+    environment:
+    - MYSQL_ROOT_PASSWORD=p@ssw0rd
+    - MYSQL_DATABASE=spring_batch
+    - MYSQL_USER=myuser
+    - MYSQL_PASSWORD=mypassword
+    - EXTRA_OPTS="--lower_case_table_names=0"
+    - TZ=Asia/Taipei
+    network_mode:  "host"
+    #    ports: 
+    # - "3306:3306" 
+volumes:
+  mysql-data-spring_batch: { }    

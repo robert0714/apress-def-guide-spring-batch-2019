@@ -1,0 +1,26 @@
+spring:
+  datasource: 
+    url: jdbc:tc:mysql:8.0.36:///spring_batch
+    # https://golang.testcontainers.org/modules/mysql/#set-username-password-and-database-name
+    #  docker exec -it  brave_germain  bash 
+    #  mysql -uroot -ptest
+    #  use test;  show tables ;select count(*) from ACCOUNT_SUMMARY ;
+    #  use test;  show tables ;select count(*) from TRANSACTION ;
+  batch:
+    jdbc:
+     #schema: classpath:org/springframework/batch/core/schema-h2.sql
+     #schema: classpath:org/springframework/batch/core/schema-postgresql.sql
+      schema: classpath:org/springframework/batch/core/schema-mysql.sql
+      initialize-schema: always
+    job:
+      enabled: true
+  sql:
+    init:
+      schema-locations:
+      - classpath:schema-mysql.sql
+      - classpath:org/springframework/batch/core/schema-mysql.sql 
+      #  			
+      # data-locations:
+      # - classpath:data-mysql.sql
+      mode: always
+      continue-on-error: false 
