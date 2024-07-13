@@ -3,14 +3,15 @@ package com.example.Chapter06;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.Map; 
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobInstance;
-import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobInstance; 
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
@@ -23,10 +24,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-import com.example.Chapter06.RestApplication.JobLaunchRequest;  
+import com.example.Chapter06.RestApplication.JobLaunchRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;  
+@Slf4j
 @SpringBatchTest
-@SpringBootTest(args = { "transactionFile=input/transactionFile.csv",
-		                 "summaryFile=file:///tmp/summaryFile3.csv" }, 
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT , 
                 properties = { "spring.batch.job.name=job",
                 		       "main.scenario=restJob",
 				               "spring.batch.job.enabled=false" },
@@ -63,13 +68,21 @@ public class RestApplicationTest {
         assertEquals("COMPLETED", jobExitStatus.getExitCode());
 	}
 	@Test
-	public void testRunJob() {
+	public void testRunJob() throws JsonProcessingException {
 		String uri = "/run";
-		final  JobLaunchRequest request = null;		 
+		final  JobLaunchRequest request = pseudoRequest() ;	
 		assertNotNull( request ); 
+		
+		log.info("----------------------------------------------");
+		String jsonRequest = new ObjectMapper().writeValueAsString(request) ;		
+		log.info(jsonRequest);
+		log.info("----------------deserialize value -------------------");;
+		JobLaunchRequest tmp =  new ObjectMapper().readValue(jsonRequest,JobLaunchRequest.class) ;
+		
+		assertNotNull( tmp );
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.set("X-Requested-With", "XMLHttpRequest");
+//		headers.set("X-Requested-With", "XMLHttpRequest");
 		 
 		
 		HttpEntity<Object>  httpObjectEntity = new HttpEntity<Object>(request, headers);
@@ -80,5 +93,10 @@ public class RestApplicationTest {
 		
 		assertNotNull( responseBody );
 		 
+	}
+	protected JobLaunchRequest pseudoRequest() { 
+		return JobLaunchRequest.builder()
+				.name("job")
+				.jobParameters(Map.of()).build();
 	}
 }

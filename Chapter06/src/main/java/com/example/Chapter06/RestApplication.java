@@ -1,8 +1,8 @@
 package com.example.Chapter06;
 
  
-import java.util.Map.Entry;
-import java.util.Properties;
+import java.util.Map;
+import java.util.Map.Entry; 
 import java.util.Set;
  
 
@@ -27,6 +27,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+ 
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @SpringBootApplication
 @ConditionalOnProperty(prefix = "main", name = "scenario", havingValue = "restJob") 
@@ -78,9 +84,15 @@ public class RestApplication {
 		@PostMapping(path = "/run")
 		public ExitStatus runJob(@RequestBody JobLaunchRequest request) throws Exception {
 			Job job = this.context.getBean(request.getName(), Job.class);
-
-			JobParameters jobParameters =
-					new JobParametersBuilder(request.getJobParameters(),
+			JobParametersBuilder builder = new JobParametersBuilder() ;
+			
+			Set<Entry<String, String>> entrySet = request.getJobParameters().entrySet() ;
+			for(Entry<String, String> unit :entrySet ) {
+				builder.addString(unit.getKey().toString(), unit.getValue().toString());
+			} 
+			
+			JobParameters jobParameters = 
+							new JobParametersBuilder(builder.toJobParameters(),
 								this.jobExplorer)
 							.getNextJobParameters(job)
 							.toJobParameters();
@@ -91,38 +103,13 @@ public class RestApplication {
 //			return this.jobLauncher.run(job, request.getJobParameters()).getExitStatus();
 		}
 	}
-
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@Data
+	@Builder
 	public static class JobLaunchRequest {
 		private String name;
-
-		private Properties jobParameters;
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public Properties getJobParamsProperties() {
-			return jobParameters;
-		}
-
-		public void setJobParamsProperties(Properties jobParameters) {
-			this.jobParameters = jobParameters;
-		}
-
-		public JobParameters getJobParameters() {
-			JobParametersBuilder builder = new JobParametersBuilder() ;
-			
-			Set<Entry<Object, Object>> entrySet = jobParameters.entrySet() ;
-			for(Entry<Object, Object> unit :entrySet ) {
-				builder.addString(unit.getKey().toString(), unit.getValue().toString());
-			} 
-
-			return builder .toJobParameters();
-		}
+		private Map<String,String> jobParameters; 
 	}
 
 	public static void main(String[] args) {
