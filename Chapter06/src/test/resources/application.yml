@@ -18,12 +18,12 @@ spring:
     init:
       schema-locations:
       - classpath:schema-mysql.sql
-      - classpath:org/springframework/batch/core/schema-mysql.sql 
+      # - classpath:org/springframework/batch/core/schema-mysql.sql 
       #  			
       # data-locations:
       # - classpath:data-mysql.sql
       mode: always
-      continue-on-error: false
+      continue-on-error: true
 logging:
   level:
-    org.springframework.web: DEBUG 			 
+    org.springframework.batch: DEBUG 			 
