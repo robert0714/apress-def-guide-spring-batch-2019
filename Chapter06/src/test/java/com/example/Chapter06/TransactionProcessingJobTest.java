@@ -1,8 +1,7 @@
 package com.example.Chapter06;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.net.URL;
+ 
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +23,7 @@ import org.springframework.test.context.jdbc.SqlGroup;
  
 
 @SpringBatchTest
-@SpringBootTest(args = { "transactionFile=input/transactionFile.csv",
+@SpringBootTest(args = { "transactionFile=classpath:/input/transactionFile.csv",
 		                 "summaryFile=file:///tmp/summaryFile3.csv" }, 
                 properties = { "spring.batch.job.name=transactionJob",
                 		       "main.scenario=transactionJob",
@@ -57,23 +56,20 @@ public class TransactionProcessingJobTest {
 //                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD) 
     })
 	public void givenTransactionJob_whenJobExecuted_thenSuccess(@Autowired @Qualifier("transactionJob") Job job) throws Exception {		
-		JobParameters jprarms = composeParameters();
-//		jobLauncherTestUtils.launchStep("importTransactionFileStep",jprarms) ;
-//		jobLauncherTestUtils.launchStep("applyTransactionsStep",jprarms) ;
-//		jobLauncherTestUtils.launchStep("generateAccountSummaryStep",jprarms) ;
+		JobParameters jprarms = composeParameters(); 
 		jobLauncherTestUtils.setJob(job);
 		
 		JobExecution jobExecution = jobLauncherTestUtils.launchJob(jprarms); 
+//		JobExecution jobExecution = jobLauncherTestUtils.launchJob();  
         JobInstance jobInstance = jobExecution.getJobInstance();
         ExitStatus jobExitStatus = jobExecution.getExitStatus();
 
         assertEquals("transactionJob", jobInstance.getJobName());
         assertEquals("COMPLETED", jobExitStatus.getExitCode());
 	}
-	 
 	protected JobParameters composeParameters() {
         JobParametersBuilder jpBuilder =  new JobParametersBuilder() ; 		
-		jpBuilder.addString("transactionFile", "input/transactionFile.csv");
+		jpBuilder.addString("transactionFile", "classpath:/input/transactionFile.csv");
 		
 		String tmpdir = System.getProperty("java.io.tmpdir");	
 		String summaryFileArgs = String.format("file://%ssummaryFile3.csv", tmpdir) ;
@@ -84,5 +80,6 @@ public class TransactionProcessingJobTest {
 		
 		return jobParameters ; 
 	}
+	 
 
 }

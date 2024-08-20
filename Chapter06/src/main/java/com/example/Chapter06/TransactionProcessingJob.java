@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 package com.example.Chapter06;
- 
-import java.io.DataInputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.net.URL;
+  
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,14 +27,10 @@ import com.example.Chapter06.domain.Transaction;
 import com.example.Chapter06.domain.TransactionDao;
 import com.example.Chapter06.domain.support.TransactionDaoSupport; 
 
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.Job; 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.job.builder.JobBuilder; 
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
@@ -54,17 +46,13 @@ import org.springframework.batch.item.file.mapping.PassThroughFieldSetMapper;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
-import org.springframework.batch.item.file.transform.FieldSet;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.batch.item.file.transform.FieldSet; 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.annotation.Value; 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty; 
+import org.springframework.context.annotation.Bean; 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.WritableResource;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -78,19 +66,13 @@ import org.springframework.transaction.PlatformTransactionManager;
  */
 @SpringBootApplication
 @ConditionalOnProperty(prefix = "main", name = "scenario", havingValue = "transactionJob") 
-public class TransactionProcessingJob 
-//implements CommandLineRunner 
-{
-	
-	@Autowired
-	private GenericApplicationContext context ;	  
-	
-	@Autowired
-	private  JobLauncher jobLauncher;
+public class TransactionProcessingJob  
+{ 
+	 
 	@Bean
 	@StepScope
-	public TransactionReader transactionReader() {
-		return new TransactionReader(fileItemReader(null));
+	public TransactionReader transactionReader(FlatFileItemReader<FieldSet> fileItemReader) {
+		return new TransactionReader(fileItemReader);
 	}
 	 
 	
@@ -98,8 +80,14 @@ public class TransactionProcessingJob
 	@StepScope
 	public FlatFileItemReader<FieldSet> fileItemReader(
 			@Value("#{jobParameters['transactionFile']}") Resource inputFileResource) {
-//		String reosurceStr = String .format("classpath:%s", inputFile);
-//		Resource inputFileResource = this.context.getResource(reosurceStr);
+ 
+		if(inputFileResource ==null) {
+			System.out.println("inputFileResource is null");
+			 
+		}else {
+			System.out.println(inputFileResource.exists());
+		}
+		
 		
 		return new FlatFileItemReaderBuilder<FieldSet>()
 				.name("fileItemReader")
@@ -125,15 +113,16 @@ public class TransactionProcessingJob
 
 	@Bean
 	public Step importTransactionFileStep(
+			TransactionReader transactionReader,
 			final JobRepository jobRepository,
 			final PlatformTransactionManager transactionManager 
 			) { 
 		return new StepBuilder("importTransactionFileStep", jobRepository)
 				.<Transaction, Transaction> chunk(100, transactionManager)
-				.reader(transactionReader())
+				.reader(transactionReader)
 				.writer(transactionWriter(null))
 				.allowStartIfComplete(true)
-				.listener(transactionReader())
+				.listener(transactionReader)
 				.build();
 	}
 
@@ -242,52 +231,17 @@ public class TransactionProcessingJob
 				.start(importTransactionFileStep)
 				.next(applyTransactionsStep)
 				.next(generateAccountSummaryStep)
-				.build();
-		
-//		return new JobBuilder("transactionJob", jobRepository)
-//				.start(importTransactionFileStep)
-//				.on("STOPPED").stopAndRestart(importTransactionFileStep)
-//				.from(importTransactionFileStep).on("*").to(applyTransactionsStep)
-//				.from(applyTransactionsStep).next(generateAccountSummaryStep)
-//				.end()
-//				.build();
+				.build(); 
 		
 	}
 
 	public static void main(String[] args) {
-		List<String> realArgs = new ArrayList<>(Arrays.asList(args));
-		
-//		ClassLoader classLoader = TransactionProcessingJob.class.getClassLoader();
-//		URL inputUrl = classLoader.getResource("input/transactionFile.csv"); 		
-//		String inputFile = inputUrl.getFile();
-//		String transactionFileArgs = String.format("transactionFile=%s", inputFile) ;
-//		
-//		realArgs.add(transactionFileArgs);
-//		
-//		String tmpdir = System.getProperty("java.io.tmpdir");		
-//		String summaryFileArgs = String.format("summaryFile=file://%s/summaryFile3.csv", tmpdir) ;	
-//		
-//		realArgs.add(summaryFileArgs);
+		List<String> realArgs = new ArrayList<>(Arrays.asList(args));		
         
-        realArgs.add("transactionFile=input/transactionFile.csv");
+        realArgs.add("transactionFile=classpath:/input/transactionFile.csv");
         realArgs.add("summaryFile=file:///tmp/summaryFile3.csv");
 
 		SpringApplication.run(TransactionProcessingJob.class, realArgs.toArray(new String[realArgs.size()]));
 	} 
-	
-//	public void run(String... args) throws Exception {
-//		JobParametersBuilder builder = new JobParametersBuilder() ;
-//		if(args!=null && args.length > 0 ) {
-//			for (String arg :args ) {
-//				String [] lines= arg.split("=");
-//				builder.addString(lines[0], lines[1]);
-//			} 
-//			JobParameters jobParameters = builder.toJobParameters();
-//			
-//			var job = context.getBean("transactionJob", Job.class); 
-//			
-//			JobExecution execution = jobLauncher.run(job, jobParameters);
-//			System.out.println("STATUS :: " + execution.getStatus());
-//		}
-//	}
+	 
 }
