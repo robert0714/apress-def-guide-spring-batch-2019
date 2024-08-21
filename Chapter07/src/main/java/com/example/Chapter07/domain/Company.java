@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 package com.example.Chapter07.domain;
-
-import org.neo4j.ogm.annotation.Property;
-
-import org.springframework.data.neo4j.annotation.QueryResult;
+  
+import org.springframework.data.neo4j.core.schema.Property; 
+import org.springframework.data.neo4j.core.schema.Id;
+import org.springframework.data.neo4j.core.schema.Node;
 
 /**
+ * Company domain class.
+ * 
  * @author Michael Minella
  */
-@QueryResult
+@Node("Company")
 public class Company {
-
+	 
+	@Id  
+    private Long id;
+	
 	@Property("s.companyName")
 	private String company;
 	@Property("c.categoryName")

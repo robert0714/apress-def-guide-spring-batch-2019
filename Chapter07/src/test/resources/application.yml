@@ -5,6 +5,8 @@ spring:
      #schema: classpath:org/springframework/batch/core/schema-postgresql.sql
       schema: classpath:org/springframework/batch/core/schema-mysql.sql
       initialize-schema: always
+    job:
+      enabled: true      
   data:
     mongodb:
       database: tweets
@@ -15,15 +17,15 @@ spring:
       password: mminella1
     uri: bolt://localhost:7687
   datasource:
-    driverClassName: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/spring_batch
-    username: 'root'
-    password: 'p@ssw0rd'
+    #driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:tc:mysql:8.0.36:///spring_batch
+    #username: 'test'
+    #password: 'test'    
   sql:
     init:
       schema-locations:
       - classpath:schema-mysql.sql
-      # - classpath:org/springframework/batch/core/schema-mysql.sql 
+      - classpath:org/springframework/batch/core/schema-mysql.sql 
       #  			
       # data-locations:
       # - classpath:data-mysql.sql

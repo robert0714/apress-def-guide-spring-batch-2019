@@ -15,8 +15,7 @@
  */
 package com.example.Chapter07.batch;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
+import jakarta.persistence.*;  
 
 import org.springframework.batch.item.database.orm.AbstractJpaQueryProvider;
 import org.springframework.util.Assert;

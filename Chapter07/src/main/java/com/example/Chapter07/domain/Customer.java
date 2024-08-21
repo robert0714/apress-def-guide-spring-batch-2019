@@ -15,14 +15,19 @@
  */
 package com.example.Chapter07.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import java.util.List;
+
+import jakarta.persistence.*;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Michael Minella
  */
+@Getter
+@Setter
 @Entity
 @Table(name = "customer")
 public class Customer {
@@ -36,119 +41,33 @@ public class Customer {
 	private String middleInitial;
 	@Column(name = "lastName")
 	private String lastName;
-//	private String addressNumber;
-//	private String street;
+	private String addressNumber;
+	private String street;
 	private String address;
 	private String city;
 	private String state;
 	private String zipCode;
 
-//	private List<Transaction> transactions;
+    @XmlElementWrapper(name = "transactions")
+	@XmlElement(name = "transaction")
+    @Transient
+	private List<Transaction> transactions;
 
 	public Customer() {
 	}
 
-//	public Customer(String firstName, String middleName, String lastName, String addressNumber, String street, String city, String state, String zipCode) {
-//		this.firstName = firstName;
-//		this.middleName = middleName;
-//		this.lastName = lastName;
-//		this.addressNumber = addressNumber;
-//		this.street = street;
-//		this.city = city;
-//		this.state = state;
-//		this.zipCode = zipCode;
-//	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getFirstName() {
-		return firstName;
-	}
-
-	public void setFirstName(String firstName) {
+	public Customer(String firstName, String middleName, String lastName, String addressNumber, String street, String city, String state, String zipCode) {
 		this.firstName = firstName;
-	}
-
-	public String getMiddleInitial() {
-		return middleInitial;
-	}
-
-	public void setMiddleInitial(String middleInitial) {
-		this.middleInitial = middleInitial;
-	}
-
-	public String getLastName() {
-		return lastName;
-	}
-
-	public void setLastName(String lastName) {
+		this.middleInitial = middleName;
 		this.lastName = lastName;
-	}
-
-//	public String getAddressNumber() {
-//		return addressNumber;
-//	}
-//
-//	public void setAddressNumber(String addressNumber) {
-//		this.addressNumber = addressNumber;
-//	}
-//
-//	public String getStreet() {
-//		return street;
-//	}
-//
-//	public void setStreet(String street) {
-//		this.street = street;
-//	}
-
-
-	public String getAddress() {
-		return address;
-	}
-
-	public void setAddress(String address) {
-		this.address = address;
-	}
-
-	public String getCity() {
-		return city;
-	}
-
-	public void setCity(String city) {
+		this.addressNumber = addressNumber;
+		this.street = street;
 		this.city = city;
-	}
-
-	public String getState() {
-		return state;
-	}
-
-	public void setState(String state) {
 		this.state = state;
-	}
-
-	public String getZipCode() {
-		return zipCode;
-	}
-
-	public void setZipCode(String zipCode) {
 		this.zipCode = zipCode;
 	}
 
-//	public List<Transaction> getTransactions() {
-//		return transactions;
-//	}
-//
-//	@XmlElementWrapper(name = "transactions")
-//	@XmlElement(name = "transaction")
-//	public void setTransactions(List<Transaction> transactions) {
-//		this.transactions = transactions;
-//	}
+  
 
 	@Override
 	public String toString() {

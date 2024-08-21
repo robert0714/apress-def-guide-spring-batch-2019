@@ -18,11 +18,16 @@ package com.example.Chapter07.domain;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.xml.bind.annotation.XmlType;
+
+import jakarta.xml.bind.annotation.XmlType;
+import lombok.Getter;
+import lombok.Setter; 
 
 /**
  * @author Michael Minella
  */
+@Getter
+@Setter
 @XmlType(name = "transaction")
 public class Transaction {
 
@@ -31,31 +36,7 @@ public class Transaction {
 	private Double amount;
 
 	private DateFormat formatter =
-			new SimpleDateFormat("MM/dd/yyyy");
-
-	public String getAccountNumber() {
-		return accountNumber;
-	}
-
-	public void setAccountNumber(String accountNumber) {
-		this.accountNumber = accountNumber;
-	}
-
-	public Date getTransactionDate() {
-		return transactionDate;
-	}
-
-	public void setTransactionDate(Date transactionDate) {
-		this.transactionDate = transactionDate;
-	}
-
-	public Double getAmount() {
-		return amount;
-	}
-
-	public void setAmount(Double amount) {
-		this.amount = amount;
-	}
+			new SimpleDateFormat("MM/dd/yyyy"); 
 
 	public String getDateString() {
 		return this.formatter.format(this.transactionDate);
