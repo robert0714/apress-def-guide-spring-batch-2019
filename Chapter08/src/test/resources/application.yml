@@ -5,16 +5,24 @@ spring:
      #schema: classpath:org/springframework/batch/core/schema-postgresql.sql
       schema: classpath:org/springframework/batch/core/schema-mysql.sql
       initialize-schema: always
-  datasource:
-    driverClassName: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/spring_batch
-    username: 'root'
-    password: 'p@ssw0rd'
+    job:
+      enabled: true 
+  datasource: 
+    url: jdbc:tc:mysql:8.0.36:///spring_batch 
   sql:
     init:
       schema-locations:
       - classpath:schema-mysql.sql
       - classpath:org/springframework/batch/core/schema-mysql.sql 
+      #  			
+      # data-locations:
+      # - classpath:data-mysql.sql
       mode: always
       continue-on-error: true
-      platform: mysql 
+      platform: mysql
+  jpa:
+    show-sql: true
+    hibernate:
+      naming:
+        implicit-strategy: "org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl"
+        physical-strategy: "org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"
