@@ -1,16 +1,28 @@
 spring:
   batch:
-    initialize-schema: always
+    jdbc:
+     #schema: classpath:org/springframework/batch/core/schema-h2.sql
+     #schema: classpath:org/springframework/batch/core/schema-postgresql.sql
+      schema: classpath:org/springframework/batch/core/schema-mysql.sql
+      initialize-schema: always
     job:
       names: emailJob
   datasource:
     driverClassName: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/spring_batch
     username: 'root'
-    password: 'p@ssw0rd'
-    initialization-mode: always
-#    continue-on-error: true
-    platform: mysql
+    password: 'p@ssw0rd'  
+  sql:
+    init:
+      schema-locations:
+      - classpath:schema-mysql.sql
+      # - classpath:org/springframework/batch/core/schema-mysql.sql 
+      #  			
+      # data-locations:
+      # - classpath:data-mysql.sql
+      mode: always
+      # continue-on-error: true
+      platform: mysql
   jms:
     template:
       default-destination: customers
@@ -35,10 +47,13 @@ spring:
         current_session_context_class: org.springframework.orm.hibernate5.SpringSessionContext
   data:
     mongodb:
-      database: customerdb
-    neo4j:
+      database: customerdb     
+  neo4j:
+    authentication:
       username: neo4j
       password: mminella1
-      embedded:
-        enabled: false
-      uri: bolt://localhost:7687
+    uri: bolt://localhost:7687 
+  
+logging:
+  level:
+    org.springframework: DEBUG

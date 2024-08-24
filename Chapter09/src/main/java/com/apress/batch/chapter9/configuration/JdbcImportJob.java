@@ -58,7 +58,7 @@ public class JdbcImportJob {
 ////	public JdbcBatchItemWriter<Customer> jdbcCustomerWriter(DataSource dataSource) throws Exception {
 ////		return new JdbcBatchItemWriterBuilder<Customer>()
 ////				.dataSource(dataSource)
-////				.sql("INSERT INTO CUSTOMER (first_name, " +
+////				.sql("INSERT INTO customer (first_name, " +
 ////						"middle_initial, " +
 ////						"last_name, " +
 ////						"address, " +
@@ -73,7 +73,7 @@ public class JdbcImportJob {
 //	public JdbcBatchItemWriter<Customer> jdbcCustomerWriter(DataSource dataSource) throws Exception {
 //		return new JdbcBatchItemWriterBuilder<Customer>()
 //				.dataSource(dataSource)
-//				.sql("INSERT INTO CUSTOMER (first_name, " +
+//				.sql("INSERT INTO customer (first_name, " +
 //						"middle_initial, " +
 //						"last_name, " +
 //						"address, " +

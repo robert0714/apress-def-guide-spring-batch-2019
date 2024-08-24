@@ -1,0 +1,32 @@
+spring:
+  batch:
+    jdbc:
+     #schema: classpath:org/springframework/batch/core/schema-h2.sql
+     #schema: classpath:org/springframework/batch/core/schema-postgresql.sql
+      schema: classpath:org/springframework/batch/core/schema-mysql.sql
+      initialize-schema: always
+    job:
+      enabled: true 
+  datasource: 
+    url: jdbc:tc:mysql:8.0.36:///spring_batch
+  integration:
+    jdbc:
+      platform: mysql
+  sql:
+    init:
+      schema-locations:
+      - classpath:schema-mysql.sql
+    # - classpath:org/springframework/batch/core/schema-mysql.sql 
+      #  			
+      # data-locations:
+      # - classpath:data-mysql.sql
+      mode: always
+      continue-on-error: true
+      platform: mysql
+  jpa:
+    show-sql: true
+    hibernate:
+      current_session_context_class: org.springframework.orm.hibernate5.SpringSessionContext
+      naming:
+        implicit-strategy: "org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl"
+        physical-strategy: "org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"

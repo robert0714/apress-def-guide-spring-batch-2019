@@ -20,10 +20,11 @@ import javax.sql.DataSource;
 import com.apress.batch.chapter9.domain.Customer;
 
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.Step; 
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
@@ -33,7 +34,9 @@ import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.mail.SimpleMailMessageItemWriter;
 import org.springframework.batch.item.mail.builder.SimpleMailMessageItemWriterBuilder;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -41,23 +44,14 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * @author Michael Minella
  */
 @Configuration
+@ConditionalOnProperty(prefix = "main", name = "scenario", havingValue = "emailSendingJob")
 public class EmailSendingJob {
-
-	private JobBuilderFactory jobBuilderFactory;
-
-	private StepBuilderFactory stepBuilderFactory;
-
-	public EmailSendingJob(JobBuilderFactory jobBuilderFactory,
-			StepBuilderFactory stepBuilderFactory) {
-
-		this.jobBuilderFactory = jobBuilderFactory;
-		this.stepBuilderFactory = stepBuilderFactory;
-	}
 
 	@Bean
 	@StepScope
@@ -85,7 +79,7 @@ public class EmailSendingJob {
 
 		return new JdbcBatchItemWriterBuilder<Customer>()
 				.namedParametersJdbcTemplate(new NamedParameterJdbcTemplate(dataSource))
-				.sql("INSERT INTO CUSTOMER (first_name, middle_initial, last_name, address, city, state, zip, email) " +
+				.sql("INSERT INTO customer (first_name, middle_initial, last_name, address, city, state, zip, email) " +
 						"VALUES(:firstName, :middleInitial, :lastName, :address, :city, :state, :zip, :email)")
 				.beanMapped()
 				.build();
@@ -111,18 +105,24 @@ public class EmailSendingJob {
 	}
 
 	@Bean
-	public Step importStep() throws Exception {
-		return this.stepBuilderFactory.get("importStep")
-				.<Customer, Customer>chunk(10)
+	public Step importStep(
+			final JobRepository jobRepository,
+			final PlatformTransactionManager transactionManager 
+			) throws Exception {
+		return new StepBuilder("importStep", jobRepository)
+				.<Customer, Customer>chunk(10, transactionManager)
 				.reader(customerEmailFileReader(null))
 				.writer(customerBatchWriter(null))
 				.build();
 	}
 
 	@Bean
-	public Step emailStep() throws Exception {
-		return this.stepBuilderFactory.get("emailStep")
-				.<Customer, SimpleMailMessage>chunk(10)
+	public Step emailStep(
+			final JobRepository jobRepository,
+			final PlatformTransactionManager transactionManager 
+			) throws Exception {
+		return new StepBuilder("emailStep", jobRepository)
+				.<Customer, SimpleMailMessage>chunk(10, transactionManager)
 				.reader(customerCursorItemReader(null))
 				.processor((ItemProcessor<Customer, SimpleMailMessage>) customer -> {
 					SimpleMailMessage mail = new SimpleMailMessage();
@@ -140,10 +140,14 @@ public class EmailSendingJob {
 	}
 
 	@Bean
-	public Job emailJob() throws Exception {
-		return this.jobBuilderFactory.get("emailJob")
-				.start(importStep())
-				.next(emailStep())
+	public Job emailJob(
+			final JobRepository jobRepository,
+			@Qualifier("importStep") Step importStep,
+			@Qualifier("emailStep") Step emailStep 	
+			) throws Exception {
+		return new JobBuilder("emailJob", jobRepository)
+				.start(importStep)
+				.next(emailStep)
 				.build();
 	}
 }

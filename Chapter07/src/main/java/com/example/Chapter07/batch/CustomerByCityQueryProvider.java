@@ -31,7 +31,7 @@ public class CustomerByCityQueryProvider extends AbstractJpaQueryProvider {
 		EntityManager manager = getEntityManager();
 
 		Query query =
-				manager.createQuery("select c from Customer " +
+				manager.createQuery("select c from customer " +
 						"c where c.city = :city");
 		query.setParameter("city", cityName);
 
