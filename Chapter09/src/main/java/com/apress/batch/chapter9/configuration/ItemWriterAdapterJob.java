@@ -14,70 +14,100 @@
  * limitations under the License.
  */
 package com.apress.batch.chapter9.configuration;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.sql.DataSource;
+
+import com.apress.batch.chapter9.batch.CustomerClassifier;
+import com.apress.batch.chapter9.domain.Customer;
+import com.apress.batch.chapter9.service.CustomerService;
+
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step; 
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder; 
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.adapter.ItemWriterAdapter;
+import org.springframework.batch.item.database.JdbcBatchItemWriter; 
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder; 
+import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder; 
+import org.springframework.batch.item.support.ClassifierCompositeItemWriter;
+import org.springframework.batch.item.support.builder.ClassifierCompositeItemWriterBuilder;
+import org.springframework.batch.item.xml.StaxEventItemWriter;
+import org.springframework.batch.item.xml.builder.StaxEventItemWriterBuilder;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.classify.Classifier;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.WritableResource; 
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate; 
+import org.springframework.oxm.xstream.XStreamMarshaller;
+import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * @author Michael Minella
  */
 @Configuration
-public class ItemWriterAdapterJob {
-//
-//	private JobBuilderFactory jobBuilderFactory;
-//
-//	private StepBuilderFactory stepBuilderFactory;
-//
-//	public ItemWriterAdapterJob(JobBuilderFactory jobBuilderFactory,
-//			StepBuilderFactory stepBuilderFactory) {
-//
-//		this.jobBuilderFactory = jobBuilderFactory;
-//		this.stepBuilderFactory = stepBuilderFactory;
-//	}
-//
-//	@Bean
-//	@StepScope
-//	public FlatFileItemReader<Customer> customerFileReader(
-//			@Value("#{jobParameters['customerFile']}")Resource inputFile) {
-//
-//		return new FlatFileItemReaderBuilder<Customer>()
-//				.name("customerFileReader")
-//				.resource(inputFile)
-//				.delimited()
-//				.names(new String[] {"firstName",
-//						"middleInitial",
-//						"lastName",
-//						"address",
-//						"city",
-//						"state",
-//						"zip"})
-//				.targetType(Customer.class)
-//				.build();
-//	}
-//
-//	@Bean
-//	public ItemWriterAdapter<Customer> itemWriter(CustomerService customerService) {
-//		ItemWriterAdapter<Customer> customerItemWriterAdapter = new ItemWriterAdapter<>();
-//
-//		customerItemWriterAdapter.setTargetObject(customerService);
-//		customerItemWriterAdapter.setTargetMethod("logCustomer");
-//
-//		return customerItemWriterAdapter;
-//	}
-//
-//
-//	@Bean
-//	public Step formatStep() throws Exception {
-//		return this.stepBuilderFactory.get("jpaFormatStep")
-//				.<Customer, Customer>chunk(10)
-//				.reader(customerFileReader(null))
-//				.writer(itemWriter(null))
-//				.build();
-//	}
-//
-//	@Bean
-//	public Job itemWriterAdapterFormatJob() throws Exception {
-//		return this.jobBuilderFactory.get("itemWriterAdapterFormatJob")
-//				.start(formatStep())
-//				.build();
-//	}
+@ConditionalOnProperty(prefix = "main", name = "scenario", havingValue = "itemWriterAdapterFormatJob")
+public class ItemWriterAdapterJob { 
+
+	@Bean
+	@StepScope
+	public FlatFileItemReader<Customer> customerFileReader(
+			@Value("#{jobParameters['customerFile']}")Resource inputFile) {
+
+		return new FlatFileItemReaderBuilder<Customer>()
+				.name("customerFileReader")
+				.resource(inputFile)
+				.delimited()
+				.names(new String[] {"firstName",
+						"middleInitial",
+						"lastName",
+						"address",
+						"city",
+						"state",
+						"zip"})
+				.targetType(Customer.class)
+				.build();
+	}
+
+	@Bean
+	public ItemWriterAdapter<Customer> itemWriter(CustomerService customerService) {
+		ItemWriterAdapter<Customer> customerItemWriterAdapter = new ItemWriterAdapter<>();
+
+		customerItemWriterAdapter.setTargetObject(customerService);
+		customerItemWriterAdapter.setTargetMethod("logCustomer");
+
+		return customerItemWriterAdapter;
+	}
+
+
+	@Bean
+	public Step formatStep(
+			final JobRepository jobRepository,
+			final PlatformTransactionManager transactionManager 
+			) throws Exception {
+		return new StepBuilder("jpaFormatStep", jobRepository)
+				.<Customer, Customer>chunk(10, transactionManager)
+				.reader(customerFileReader(null))
+				.writer(itemWriter(null))
+				.build();
+	}
+
+	@Bean
+	public Job itemWriterAdapterFormatJob(
+			final JobRepository jobRepository,
+			@Qualifier("formatStep") Step formatStep
+			) throws Exception {
+		return new JobBuilder("itemWriterAdapterFormatJob", jobRepository)
+				.start(formatStep)
+				.build();
+	}
 }

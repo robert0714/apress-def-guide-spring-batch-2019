@@ -13,81 +13,97 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.apress.batch.chapter9.configuration;
+package com.apress.batch.chapter9.configuration; 
+ 
+import com.apress.batch.chapter9.domain.Customer;
 
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step; 
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;  
+import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.FlatFileItemWriter;
+import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder; 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty; 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.WritableResource;  
+import org.springframework.transaction.PlatformTransactionManager;
 /**
  * @author Michael Minella
  */
 @Configuration
+@ConditionalOnProperty(prefix = "main", name = "scenario", havingValue = "delimitedJob")
 public class DelimitedFileJob {
-//
-//	private JobBuilderFactory jobBuilderFactory;
-//
-//	private StepBuilderFactory stepBuilderFactory;
-//
-//	public DelimitedFileJob(JobBuilderFactory jobBuilderFactory,
-//			StepBuilderFactory stepBuilderFactory) {
-//
-//		this.jobBuilderFactory = jobBuilderFactory;
-//		this.stepBuilderFactory = stepBuilderFactory;
-//	}
-//
-//	@Bean
-//	@StepScope
-//	public FlatFileItemReader<Customer> customerFileReader(
-//			@Value("#{jobParameters['customerFile']}")Resource inputFile) {
-//
-//		return new FlatFileItemReaderBuilder<Customer>()
-//				.name("customerFileReader")
-//				.resource(inputFile)
-//				.delimited()
-//				.names(new String[] {"firstName",
-//						"middleInitial",
-//						"lastName",
-//						"address",
-//						"city",
-//						"state",
-//						"zip"})
-//				.targetType(Customer.class)
-//				.build();
-//	}
-//
-//	@Bean
-//	@StepScope
-//	public FlatFileItemWriter<Customer> customerItemWriter(
-//			@Value("#{jobParameters['outputFile']}") Resource outputFile) {
-//
-//		return new FlatFileItemWriterBuilder<Customer>()
-//				.name("customerItemWriter")
-//				.resource(outputFile)
-//				.delimited()
-//				.delimiter(";")
-//				.names(new String[] {"zip",
-//						"state",
-//						"city",
-//						"address",
-//						"lastName",
-//						"firstName"})
-//				.append(true)
-//				.build();
-//	}
-//
-//	@Bean
-//	public Step delimitedStep() {
-//		return this.stepBuilderFactory.get("delimitedStep")
-//				.<Customer, Customer>chunk(10)
-//				.reader(customerFileReader(null))
-//				.writer(customerItemWriter(null))
-//				.build();
-//	}
-//
-//	@Bean
-//	public Job delimitedJob() {
-//		return this.jobBuilderFactory.get("delimitedJob")
-//				.start(delimitedStep())
-//				.incrementer(new RunIdIncrementer())
-//				.build();
-//	}
+ 
+	@Bean
+	@StepScope
+	public FlatFileItemReader<Customer> customerFileReader(
+			@Value("#{jobParameters['customerFile']}")Resource inputFile) {
+
+		return new FlatFileItemReaderBuilder<Customer>()
+				.name("customerFileReader")
+				.resource(inputFile)
+				.delimited()
+				.names(new String[] {"firstName",
+						"middleInitial",
+						"lastName",
+						"address",
+						"city",
+						"state",
+						"zip"})
+				.targetType(Customer.class)
+				.build();
+	}
+
+	@Bean
+	@StepScope
+	public FlatFileItemWriter<Customer> customerItemWriter(
+			@Value("#{jobParameters['outputFile']}") WritableResource outputFile) {
+
+		return new FlatFileItemWriterBuilder<Customer>()
+				.name("customerItemWriter")
+				.resource(outputFile)
+				.delimited()
+				.delimiter(";")
+				.names(new String[] {"zip",
+						"state",
+						"city",
+						"address",
+						"lastName",
+						"firstName"})
+				.append(true)
+				.build();
+	}
+
+	@Bean
+	public Step delimitedStep(
+			final JobRepository jobRepository,
+			final PlatformTransactionManager transactionManager 
+			) {
+		return  new StepBuilder("delimitedStep", jobRepository)
+				.<Customer, Customer>chunk(10, transactionManager)
+				.reader(customerFileReader(null))
+				.writer(customerItemWriter(null))
+				.build();
+	}
+
+	@Bean
+	public Job delimitedJob(
+			final JobRepository jobRepository,
+			@Qualifier("delimitedStep") Step delimitedStep
+			
+			) {
+		return new JobBuilder("delimitedJob", jobRepository)
+				.start(delimitedStep)
+				.incrementer(new RunIdIncrementer())
+				.build();
+	}
 }

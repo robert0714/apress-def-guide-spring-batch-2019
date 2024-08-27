@@ -26,7 +26,7 @@ import jakarta.persistence.*;
  * @author Michael Minella
  */
 @Entity
-@Table(name = "customer")
+@Table(name = "customer") 
 //@NodeEntity
 //@Region(value = "Customers")
 public class Customer implements Serializable {
@@ -36,8 +36,13 @@ public class Customer implements Serializable {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 //	@GeneratedValue(strategy = UuidStrategy.class)
 	private long id;
+	@Column(name="first_name")
 	private String firstName;
+	
+	@Column(name="middle_initial")
 	private String middleInitial;
+	
+	@Column(name="last_name")
 	private String lastName;
 	private String address;
 	private String city;
