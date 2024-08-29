@@ -15,43 +15,41 @@
  */
 package com.example.Chapter13.batch;
 
-import java.util.Arrays;
-import javax.sql.DataSource;
+import java.util.Arrays; 
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test; 
 
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.StepExecution; 
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.SpringBootApplication; 
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean; 
+import org.springframework.test.context.TestPropertySource; 
+import org.springframework.transaction.PlatformTransactionManager; 
+ 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Michael Minella
- */
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {JobTests.BatchConfiguration.class, BatchAutoConfiguration.class})
+ */ 
 @SpringBatchTest
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
+@SpringBootTest(  properties = {  
+                                "spring.batch.job.enabled=false" } , 
+                 classes =  JobTests.BatchConfiguration.class  )  
+@TestPropertySource(properties = "debug=true")
 public class JobTests {
 
 	@Autowired
@@ -73,16 +71,8 @@ public class JobTests {
 		assertEquals(3, stepExecution.getWriteCount());
 	}
 
-	@Configuration
-	@EnableBatchProcessing
-	public static class BatchConfiguration {
-
-		@Autowired
-		private JobBuilderFactory jobBuilderFactory;
-
-		@Autowired
-		private StepBuilderFactory stepBuilderFactory;
-
+	@SpringBootApplication
+	public static class BatchConfiguration { 
 		@Bean
 		public ListItemReader<String> itemReader() {
 			return new ListItemReader<>(Arrays.asList("foo", "bar", "baz"));
@@ -96,24 +86,25 @@ public class JobTests {
 		}
 
 		@Bean
-		public Step step1() {
-			return this.stepBuilderFactory.get("step1")
-					.<String, String>chunk(10)
+		public Step step1(
+				final JobRepository jobRepository,
+				final PlatformTransactionManager transactionManager 
+				) {
+			return new StepBuilder("step1", jobRepository)
+					.<String, String>chunk(10, transactionManager)
 					.reader(itemReader())
 					.writer(itemWriter())
 					.build();
 		}
 
 		@Bean
-		public Job job() {
-			return this.jobBuilderFactory.get("job")
-					.start(step1())
+		public Job job(
+				final JobRepository jobRepository,
+				@Qualifier("step1") Step step1
+				) {
+			return new JobBuilder("job", jobRepository)
+					.start(step1)
 					.build();
-		}
-
-		@Bean
-		public DataSource dataSource() {
-			return new EmbeddedDatabaseBuilder().build();
 		}
 
 	}

@@ -15,39 +15,37 @@
  */
 package com.example.Chapter13.batch;
 
+import com.example.Chapter13.DemoApplication;
 import com.example.Chapter13.configuration.ImportJobConfiguration;
 import com.example.Chapter13.domain.CustomerAddressUpdate;
 import com.example.Chapter13.domain.CustomerContactUpdate;
 import com.example.Chapter13.domain.CustomerNameUpdate;
 import com.example.Chapter13.domain.CustomerUpdate;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test; 
 
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.StepExecution; 
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.test.MetaDataInstanceFactory;
 import org.springframework.batch.test.context.SpringBatchTest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.beans.factory.annotation.Autowired; 
+import org.springframework.boot.test.context.SpringBootTest; 
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import static org.junit.Assert.assertTrue;
 
 /**
  * @author Michael Minella
  */
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {ImportJobConfiguration.class,
-		CustomerItemValidator.class,
-		AccountItemProcessor.class})
-@JdbcTest
-@EnableBatchProcessing
 @SpringBatchTest
+@SpringBootTest( 
+               properties = {   
+               		       "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration,org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration",
+               		       "spring.batch.job.enabled=false" },
+               classes =  DemoApplication.class  )
+@SpringJUnitConfig({ImportJobConfiguration.class ,CustomerItemValidator.class,AccountItemProcessor.class  }) 
 public class FlatFileItemReaderTests {
 
 	@Autowired

@@ -35,7 +35,7 @@ public class CustomerItemValidator
 	private final NamedParameterJdbcTemplate jdbcTemplate;
 
 	protected static final String FIND_CUSTOMER =
-			"SELECT COUNT(*) FROM CUSTOMER WHERE customer_id = :id";
+			"SELECT COUNT(*) FROM customer WHERE customer_id = :id";
 
 	public CustomerItemValidator(NamedParameterJdbcTemplate template) {
 		this.jdbcTemplate = template;

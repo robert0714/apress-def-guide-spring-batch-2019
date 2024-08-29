@@ -44,7 +44,7 @@ public class CustomerItemValidatorTests {
 
 	@BeforeEach
 	public void setUp() {
-		MockitoAnnotations.initMocks(this);
+		MockitoAnnotations.openMocks(this);
 		this.validator = new CustomerItemValidator(this.template);
 	}
 

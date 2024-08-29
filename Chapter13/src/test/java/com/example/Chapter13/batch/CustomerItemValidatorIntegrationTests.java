@@ -16,17 +16,21 @@
 package com.example.Chapter13.batch;
 
 import javax.sql.DataSource;
-
+ 
+import com.example.Chapter13.DemoApplication;
+import com.example.Chapter13.configuration.ImportJobConfiguration;
 import com.example.Chapter13.domain.CustomerUpdate;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test; 
 
 import org.springframework.batch.item.validator.ValidationException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.batch.test.context.SpringBatchTest;
+import org.springframework.beans.factory.annotation.Autowired; 
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlGroup;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -34,8 +38,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  * @author Michael Minella
  */
-@ExtendWith(SpringExtension.class)
-@JdbcTest
+@SpringBatchTest
+@SpringBootTest( 
+               properties = {   
+               		       "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration,org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration",
+               		       "spring.batch.job.enabled=false" },
+               classes =  DemoApplication.class  )
+@SpringJUnitConfig({ImportJobConfiguration.class ,CustomerItemValidator.class,AccountItemProcessor.class  }) 
 public class CustomerItemValidatorIntegrationTests {
 
 	@Autowired
@@ -49,7 +58,12 @@ public class CustomerItemValidatorIntegrationTests {
 		this.customerItemValidator = new CustomerItemValidator(template);
 	}
 
-	@Test
+	@SqlGroup({
+		@Sql(scripts = { "classpath:schema-mysql.sql" , "classpath:data.sql" },  
+				executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+        @Sql(scripts = {"classpath:schema-drop.sql"},
+        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD) })
+	@Test 
 	public void testNoCustomers() {
 		CustomerUpdate customerUpdate = new CustomerUpdate(-5L);
 
@@ -62,7 +76,12 @@ public class CustomerItemValidatorIntegrationTests {
 
 	}
 
-	@Test
+	@SqlGroup({
+		@Sql(scripts = { "classpath:schema-mysql.sql" , "classpath:data.sql" },  
+				executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+        @Sql(scripts = {"classpath:schema-drop.sql"},
+        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD) })
+	@Test 
 	public void testCustomers() {
 		CustomerUpdate customerUpdate = new CustomerUpdate(5L);
 		this.customerItemValidator.validate(customerUpdate);
