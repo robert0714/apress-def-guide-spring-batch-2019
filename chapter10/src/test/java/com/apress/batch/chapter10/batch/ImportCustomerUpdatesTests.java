@@ -20,35 +20,51 @@ import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
 
+import com.apress.batch.chapter10.Chapter10Application;
 import com.apress.batch.chapter10.configuration.ImportJobConfiguration;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import com.apress.batch.chapter10.domain.CustomerUpdate;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test; 
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.ExitStatus;
+import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.item.Chunk;
+import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.support.ClassifierCompositeItemWriter;
+import org.springframework.batch.item.validator.ValidatingItemProcessor;
 import org.springframework.batch.test.JobLauncherTestUtils;
+import org.springframework.batch.test.MetaDataInstanceFactory;
+import org.springframework.batch.test.StepScopeTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.context.SpringBootTest; 
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlGroup; 
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig; 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 /**
  * @author Michael Minella
- */
-@ExtendWith(SpringExtension.class)
-@JdbcTest
+ * https://github.com/eugenp/tutorials/blob/master/spring-batch/src/test/java/com/baeldung/batchtesting/SpringBatchStepScopeIntegrationTest.java<p>
+ * https://docs.spring.io/spring-batch/reference/testing.html<p>
+ */   
 @SpringBatchTest
-@ContextConfiguration(classes = {ImportJobConfiguration.class, CustomerItemValidator.class, AccountItemProcessor.class, BatchAutoConfiguration.class})
+@SpringBootTest( 
+               properties = {   
+               		       "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration,org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration",
+               		       "spring.batch.job.enabled=false" },
+               classes =  Chapter10Application.class  )
+@SpringJUnitConfig({ImportJobConfiguration.class ,CustomerItemValidator.class,AccountItemProcessor.class  }) 
 @TestPropertySource(properties = "debug=true")
 public class ImportCustomerUpdatesTests {
 
@@ -58,44 +74,114 @@ public class ImportCustomerUpdatesTests {
 	@Autowired
 	private DataSource dataSource;
 
-	private JdbcOperations jdbcTemplate;
+	private JdbcOperations jdbcTemplate; 
+
+	@Autowired
+	private FlatFileItemReader<CustomerUpdate> customerUpdateItemReader;
+	
+	@Autowired
+	private ValidatingItemProcessor<CustomerUpdate> customerValidatingItemProcessor;	
+	
+	@Autowired
+	private ClassifierCompositeItemWriter<CustomerUpdate> customerUpdateItemWriter;
 
 	@BeforeEach
 	public void setUp() {
 		this.jdbcTemplate = new JdbcTemplate(this.dataSource);
 	}
+	 
+	
+	@SqlGroup({
+		@Sql(scripts = { "classpath:schema-mysql.sql" , "classpath:data.sql" },  
+				executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+        @Sql(scripts = {"classpath:schema-drop.sql"},
+        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD) })
+	@Test 
+    public void givenMockedStepDetail_whenReaderCalled_thenSuccess() throws Exception {		 
+		// given 
+        StepExecution stepExecution = MetaDataInstanceFactory.createStepExecution(defaultJobParameters());
+       
+        // when
+		StepScopeTestUtils.doInStepScope(stepExecution, () -> {
+			CustomerUpdate line;
+			customerUpdateItemReader.open(stepExecution.getExecutionContext());
+			while ((line = customerUpdateItemReader.read()) != null) {
+				// then
+				long id = line.getCustomerId();
+				assertEquals(5l, id);
 
-	@Test
-	public void test() {
-		JobParameters jobParameters = new JobParametersBuilder()
-				.addString("customerUpdateFile", "classpath:customerFile.csv")
-				.toJobParameters();
-
-		JobExecution jobExecution = this.jobLauncherTestUtils.launchStep("importCustomerUpdates", jobParameters);
+				CustomerUpdate item = customerValidatingItemProcessor.process(line);
+				customerUpdateItemWriter.write(new Chunk<>(List.of(item)));
+			}
+			customerUpdateItemReader.close();
+			return null;
+		});
+       
+		verifyData();
+    }  
+	
+	@SqlGroup({
+		@Sql(scripts = { "classpath:schema-mysql.sql" , "classpath:data.sql" },  
+				executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+        @Sql(scripts = {"classpath:schema-drop.sql"},
+        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD) })
+	@Test  
+    public void givenMockedStep_whenReaderCalled_thenSuccess() throws Exception {		 
+		// given 
+		JobExecution jobExecution = this.jobLauncherTestUtils.launchStep("importCustomerUpdates", defaultJobParameters());
 
 		assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+       
+		verifyData();
+    } 
+	@SqlGroup({
+		@Sql(scripts = { "classpath:schema-mysql.sql" , "classpath:data.sql" },  
+				executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+        @Sql(scripts = {"classpath:schema-drop.sql"},
+        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD) })
+	@Test
+	public void test(@Autowired @Qualifier("importJob") Job job) throws Exception {
+		 
+		// given.
+		JobParameters jobParameters = defaultJobParameters(); 
+		
+		jobLauncherTestUtils.setJob(job);
+        
+        // when
+        JobExecution jobExecution = this.jobLauncherTestUtils.launchJob(jobParameters); 
+        
+		JobInstance jobInstance = jobExecution.getJobInstance();
+        ExitStatus jobExitStatus = jobExecution.getExitStatus(); 
+        
+        assertEquals("importJob", jobInstance.getJobName());
+        assertEquals("COMPLETED", jobExitStatus.getExitCode());
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
-		List<Map<String, String>> results = this.jdbcTemplate.query("select * from customer where id = 5", (rs, rowNum) -> {
-			Map<String, String> item = new HashMap<>();
+        verifyData();
+	}
+	private void verifyData() {
+		List<Map<String, String>> results = this.jdbcTemplate.query("select * from customer where customer_id = 5",
+				(rs, rowNum) -> {
+					Map<String, String> item = new HashMap<>();
 
-			item.put("customer_id", rs.getString("customer_id"));
-			item.put("first_name", rs.getString("first_name"));
-			item.put("middle_name", rs.getString("middle_name"));
-			item.put("last_name", rs.getString("last_name"));
-			item.put("address1", rs.getString("address1"));
-			item.put("address2", rs.getString("address2"));
-			item.put("city", rs.getString("city"));
-			item.put("state", rs.getString("state"));
-			item.put("postal_code", rs.getString("postal_code"));
-			item.put("ssn", rs.getString("ssn"));
-			item.put("email_address", rs.getString("email_address"));
-			item.put("home_phone", rs.getString("home_phone"));
-			item.put("cell_phone", rs.getString("cell_phone"));
-			item.put("work_phone", rs.getString("work_phone"));
-			item.put("notification_pref", rs.getString("notification_pref"));
+					item.put("customer_id", rs.getString("customer_id"));
+					item.put("first_name", rs.getString("first_name"));
+					item.put("middle_name", rs.getString("middle_name"));
+					item.put("last_name", rs.getString("last_name"));
+					item.put("address1", rs.getString("address1"));
+					item.put("address2", rs.getString("address2"));
+					item.put("city", rs.getString("city"));
+					item.put("state", rs.getString("state"));
+					item.put("postal_code", rs.getString("postal_code"));
+					item.put("ssn", rs.getString("ssn"));
+					item.put("email_address", rs.getString("email_address"));
+					item.put("home_phone", rs.getString("home_phone"));
+					item.put("cell_phone", rs.getString("cell_phone"));
+					item.put("work_phone", rs.getString("work_phone"));
+					item.put("notification_pref", rs.getString("notification_pref"));
 
-			return item;
-		});
+					return item;
+				});
 
 		Map<String, String> result = results.get(0);
 
@@ -114,5 +200,14 @@ public class ImportCustomerUpdatesTests {
 		assertEquals("907-709-2649", result.get("cell_phone"));
 		assertEquals("316-510-9138", result.get("work_phone"));
 		assertEquals("2", result.get("notification_pref"));
+		
 	}
+    private JobParameters defaultJobParameters() {
+        JobParametersBuilder paramsBuilder = new JobParametersBuilder();
+        paramsBuilder.addString("customerUpdateFile", "classpath:customerFile.csv"); 
+        paramsBuilder.addString("transactionFile", "classpath:data/transactions.xml"); 
+        paramsBuilder.addString("outputDirectory", "file:///tmp/"); 
+        
+        return paramsBuilder.toJobParameters();
+    }
 }

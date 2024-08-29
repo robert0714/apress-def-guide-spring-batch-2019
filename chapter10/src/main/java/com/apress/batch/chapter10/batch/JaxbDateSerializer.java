@@ -16,8 +16,9 @@
 package com.apress.batch.chapter10.batch;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import java.util.Date;  
+
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
  * @author Michael Minella

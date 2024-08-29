@@ -16,11 +16,12 @@
 package com.apress.batch.chapter10.domain;
 
 import java.math.BigDecimal;
-import java.util.Date;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.util.Date; 
 
 import com.apress.batch.chapter10.batch.JaxbDateSerializer;
+
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
  * @author Michael Minella
